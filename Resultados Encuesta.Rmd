@@ -1,0 +1,889 @@
+---
+title: "Proyecto Estadística Descriptiva"
+author: "Santiago Quecan"
+date: "2023-11-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Librerias
+
+```{r message=FALSE, warning=FALSE}
+library(readr)
+library(readxl)
+library(modeest)
+library(moments)
+library(tidyverse) #ciencia de datos 
+library(flextable) #Construir tablas
+library(gclus)
+library(PerformanceAnalytics)
+library(psych)
+library(corrgram)
+library(corrplot)
+library(dplyr)
+library(janitor) #Tablas de construccion
+library(knitr)
+library(vcd)
+library(stringr)
+library(forcats)
+library(likert)
+library(sjPlot)
+library(ggplot2)
+library(xtable)
+```
+
+## 2. Leer Datos
+
+```{r}
+library(readxl)
+Resultados <- read_excel("Resultados.xlsx")
+View(Resultados)
+```
+
+## Tablas y Gráficos de frecuencias
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(EDAD) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de edades")
+
+Resultados %>%
+  tabyl(EDAD) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = EDAD, y = frecuencia_abs, fill = EDAD)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 0.5) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n), 
+            vjust = 1.0, 
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 3) +        # Tamaño del texto
+  guides(fill = FALSE) +
+  labs(x = "EDAD", y = "Numero de personas", title = "Edades de las personas encuestadas")
+
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(GÉNERO) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de géneros")
+
+Resultados %>%
+  tabyl(GÉNERO) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = GÉNERO, y = frecuencia_abs, fill = GÉNERO)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n), 
+            vjust = 1.5, 
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  guides(fill = FALSE) +
+  labs(x = "GÉNERO", y = "Numero de personas", title = "Género de las personas encuestadas")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(PROGRAMA) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de carreras")
+
+Resultados %>%
+  tabyl(PROGRAMA) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = factor(PROGRAMA, labels = c("Contaduria\nPública", "Ingeniería\nAmbiental", "Ingeniería\n de Sistemas", "Ingeniería\nde Energías", "Ingeniería\nMecatrónica", "Ingeniería\nQuímica", "Lenguas\nModernas", "Marketing", "Psicologia")), y = frecuencia_abs, fill = PROGRAMA)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n),
+           position = position_dodge(width = 1.0),
+            vjust = -0.2,
+            col = "black",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) + 
+  guides(fill = FALSE) +
+  labs(x = "PROGRAMA", y = "Numero de personas", title = "Carreras de las personas encuestadas") 
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(CONSUME) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de consumidores")
+
+Resultados %>%
+  tabyl(CONSUME) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = CONSUME, y = frecuencia_abs, fill = CONSUME)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n), 
+            vjust = -0.5, 
+            col = "black",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  guides(fill = FALSE) +
+  labs(x = "CONSUME", y = "Numero de personas", title = "Género de las personas encuestadas")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(OPINION) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de la opinion sobre las personas que fuman cigarrillo")
+
+Resultados %>%
+  tabyl(OPINION) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = factor(OPINION, labels = c("Incomodidad", "No hay \nopinión", "Positiva", "Negativa \nrespecto a la salud")), y = frecuencia_abs, fill = OPINION)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n),
+           position = position_dodge(width = 1.0),
+            vjust = 1.5,
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) + 
+  guides(fill = FALSE) +
+  labs(x = "OPINION", y = "Numero de personas", title = "Opinion de las personas encuestadas \nsobre los consumidores de cigarrillos") 
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(BENEFICIO_VAPER) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de consideración del beneficio del vaper")
+
+Resultados %>%
+  tabyl(BENEFICIO_VAPER) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = factor(BENEFICIO_VAPER, labels = c("No", "Si")), y = frecuencia_abs, fill = BENEFICIO_VAPER)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n),
+           position = position_dodge(width = 1.0),
+            vjust = 1.5,
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) + 
+  guides(fill = FALSE) +
+  labs(x = "BENEFICIO", y = "Numero de personas", title = "Opinion de las personas encuestadas \nsobre si hay un beneficio al consumir vapeador") 
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(OPINION_CONSUMIDORES) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de opinión sobre las personas que fuman en espacios públicos")
+
+Resultados %>%
+  tabyl(OPINION_CONSUMIDORES) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = factor(OPINION_CONSUMIDORES, labels = c("De acuerdo", "De acuerdo \n con condición", "En desacuerdo")), y = frecuencia_abs, fill = OPINION_CONSUMIDORES)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n),
+           position = position_dodge(width = 1.0),
+            vjust = 1.5,
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  theme(axis.text.x = element_text(angle = 0, hjust = 0.5)) + 
+  guides(fill = FALSE) +
+  labs(x = "OPINION", y = "Numero de personas", title = "Opinion de las personas encuestadas \nsobre las personas que fuman en espacios públicos") 
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(PERSONAS_VISTAS) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de la cantidad de personas vistas fumando")
+
+Resultados %>%
+  tabyl(PERSONAS_VISTAS) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = PERSONAS_VISTAS, y = frecuencia_abs, fill = PERSONAS_VISTAS)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n), 
+            vjust = 1.5, 
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  guides(fill = FALSE) +
+  labs(x = "Personas vistas", y = "Numero de personas", title = "Cuantos consumidores ven al dia las personas encuestadas")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  tabyl(CONSUMIDORES_FAMILIA) %>%
+  adorn_totals("row") %>%
+  adorn_pct_formatting() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_tron() %>%
+  set_caption("Tabla de frecuencias de la cantidad de familiares o amigos que fumen")
+
+Resultados %>%
+  tabyl(CONSUMIDORES_FAMILIA) %>%
+  mutate(frecuencia_abs = n) %>%
+  ggplot(aes(x = CONSUMIDORES_FAMILIA, y = frecuencia_abs, fill = CONSUMIDORES_FAMILIA)) +
+  geom_col(color = "black",  # Color del borde de las barras
+           size = 1) +       # Tamaño del borde de las barras
+  geom_text(aes(label = n), 
+            vjust = 1.5, 
+            col = "white",    # Color del texto
+            fontface = "bold", # Estilo del texto
+            size = 4) +        # Tamaño del texto
+  guides(fill = FALSE) +
+  labs(x = "Familiares consumidores", y = "Numero de personas", title = "Cuantos amigos o miembros de la familia de las personas encuestadas \nson consumidores")
+```
+
+## Medidas de Tendencia Central
+
+```{r}
+lista_central = list(
+  media = mean,
+  moda = mlv,
+  mediana = median,
+  asimetria = skewness
+)
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>% #pipe o tuberia
+  pivot_longer(c(EDAD, PERSONAS_VISTAS, CONSUMIDORES_FAMILIA), names_to = "Variable", values_to = "Valores") %>%
+  group_by(Variable)%>%
+  summarise_at(vars(Valores), lista_central, na.rm = T) %>%
+  flextable() %>%
+  colformat_double(digits = 1) %>%
+  set_caption("Medidas de tendencia central") %>%
+  theme_tron_legacy()
+```
+
+## Tabla Valores Cuantitativos
+
+```{r message=FALSE, warning=FALSE}
+coef_var = function(x,na.rm = T){
+    (sd(x, na.rm = T)/mean(x, na.rm = T))*100
+  }
+
+lista_ejercicio = list(
+  varianza = var,
+  desviacion = sd,
+  curtosis = kurtosis,
+  coeficiente_variacion = coef_var
+)
+
+Resultados %>% #pipe o tuberia
+  pivot_longer(c(EDAD, PERSONAS_VISTAS, CONSUMIDORES_FAMILIA), names_to = "Variable", values_to = "Valores") %>%
+  group_by(Variable)%>%
+  summarise_at(vars(Valores), lista_ejercicio, na.rm = T) %>%
+  flextable() %>%
+  colformat_double(digits = 1) %>%
+  set_caption("Tabla de valores cuantitativos") %>%
+  theme_tron_legacy()   
+```
+
+## Análisis Descriptivo
+
+```{r}
+datos_cn <- Resultados[,c(3, 10, 15, 16)]
+dato_cl <- Resultados[ , 6]
+```
+
+## Histogramas
+
+```{r}
+histograma <- function(x, na.rm = T) {
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(usr[1:2], 0, 1.5))
+    his <- hist(x, plot = FALSE)
+    breaks <- his$breaks
+    nB <- length(breaks)
+    y <- his$counts
+    y <- y/max(y)
+    rect(breaks[-nB], 0, breaks[-1], y, col = rgb(0, 1, 1, alpha = 0.5), na.rm = T)
+    # lines(density(x), col = 2, lwd = 2) # Descomenta para añadir curvas de densidad
+}
+```
+
+```{r message=FALSE, warning=FALSE}
+# Creando el gráfico de correlación por pares
+pairs(datos_cn,
+      upper.panel = NULL,         # Deshabilitamos el panel superior
+      diag.panel = histograma, # Añadimos los histogramas
+      font.labels = 9)    
+```
+
+## Coeficientes de Correlación
+
+```{r}
+# Función para agregar coeficientes de correlación
+coef_cor <- function(x, y, digits = 2, prefix = "", cex.cor, ...) {
+    usr <- par("usr")
+    on.exit(par(usr))
+    par(usr = c(0, 1, 0, 1))
+    Cor <- abs(cor(x, y)) # Elimina la función abs si lo prefieres
+    txt <- paste0(prefix, format(c(Cor, 0.123456789), digits = digits)[1])
+    if(missing(cex.cor)) {
+        cex.cor <- 0.4 / strwidth(txt)
+    }
+    text(0.5, 0.5, txt,
+         cex = 1 + cex.cor * Cor) # Escala el texto al nivel de correlación
+}
+```
+
+```{r message=FALSE, warning=FALSE}
+# Dibujamos la matriz de correlación
+pairs(datos_cn,
+      upper.panel = coef_cor,    # Panel de correlación
+      lower.panel = panel.smooth, # Curvas de regresión suavizadas
+      font.labels = 9)
+```
+
+## Variables Ordenadas
+
+```{r}
+# Correlación en términos absolutos
+corr <- abs(cor(datos_cn)) 
+
+colors <- dmat.color(corr)
+order <- order.single(corr)
+
+cpairs(datos_cn, # Data frame
+       order, # Orden de las variables
+       panel.colors = colors,   # Matriz de colores
+       border.color = "black", # Color de los bordes
+       gap = 0.45,              # Distancia entre subplots
+       main = "Variables ordenadas coloreadas por correlación", # Título principal
+       show.points = TRUE,      # Si FALSE, elimina todos los puntos
+       pch = 24,                # Símbolo pch
+       bg = rainbow(6)[iris$Species], # Colores por grupo
+       font.labels = 9) 
+```
+
+## Estadísticas Significativas
+
+```{r message=FALSE, warning=FALSE}
+chart.Correlation(datos_cn, histogram = TRUE, method = "pearson")
+```
+
+## Matriz de Correlación
+
+```{r}
+corPlot(datos_cn, cex = 1.2, main = "Matriz de correlación")
+```
+
+## Correlograma
+
+```{r}
+corrplot(cor(datos_cn),        # Matriz de correlación
+         method = "square", # Método para el gráfico de correlación
+         type = "full",    # Estilo del gráfico (también "upper" y "lower")
+         diag = TRUE,      # Si TRUE (por defecto), añade la diagonal
+         tl.col = "black", # Color de las etiquetas
+         bg = "white",     # Color de fondo
+         title = "",       # Título
+         col = NULL)       # Paleta de colores
+```
+
+## Análisis Descriptivo
+
+```{r}
+Media_desviacion = function(x,na.rm=T){
+media=mean(x,na.rm=T)
+desviacion=sd(x,na.rm=T)
+sprintf("%1.f ± %1.f",media,desviacion)
+}
+
+Mediana_cuartiles = function(x, na.rm=T){
+mediana=median(x,na.rm=T)
+Q1= quantile(x,0.25,na.rm=T)
+Q3= quantile(x,0.75,na.rm=T)
+sprintf("%1.f[%1.f,%1.f]",mediana,Q1,Q3)
+}
+
+lista_mostrar = list(
+Media_s = Media_desviacion,
+Mediana_q = Mediana_cuartiles
+)
+```
+
+```{r}
+Resultados %>%
+pivot_longer(c(EDAD, DINERO_GASTADO, PERSONAS_VISTAS, CONSUMIDORES_FAMILIA), names_to = "Variables_cuantitativas", values_to = "Cantidad") %>%
+group_by(Variables_cuantitativas) %>%
+summarise_at(vars(Cantidad), lista_mostrar, na.rm=T) %>%
+flextable() %>%
+colformat_double(digits= 1) %>%
+autofit() %>%
+theme_vader() %>%
+set_caption("Medidas de tendencia central y de localización más desviación")
+```
+
+## Variable Edad
+
+### Gráficos de Densidad
+
+```{r}
+Resultados %>%
+mutate(GÉNERO = factor(GÉNERO)) %>%
+ggplot(aes(x = EDAD)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~GÉNERO,
+scales = "free")
+```
+
+```{r}
+Resultados %>%
+mutate(CONSUME = factor(CONSUME)) %>%
+ggplot(aes(x = EDAD)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~CONSUME,
+scales = "free")
+```
+
+### Boxplot
+
+```{r}
+Resultados %>%
+  mutate(GÉNERO = factor(GÉNERO, labels = c("Femenino", "Masculino")))%>%
+  ggplot(aes(x = EDAD, fill = GÉNERO)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+```{r}
+Resultados %>%
+  mutate(CONSUME = factor(CONSUME))%>%
+  ggplot(aes(x = EDAD, fill = CONSUME)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+## Variable Consumidores familia
+
+### Gráfico de densidad
+
+```{r}
+Resultados %>%
+mutate(GÉNERO = factor(GÉNERO)) %>%
+ggplot(aes(x = CONSUMIDORES_FAMILIA)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~GÉNERO,
+scales = "free")
+```
+
+```{r}
+Resultados %>%
+mutate(CONSUME = factor(CONSUME)) %>%
+ggplot(aes(x = CONSUMIDORES_FAMILIA)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~CONSUME,
+scales = "free")
+```
+
+### Boxplot
+
+```{r}
+Resultados %>%
+  mutate(GÉNERO = factor(GÉNERO, labels = c("Femenino", "Masculino")))%>%
+  ggplot(aes(x = CONSUMIDORES_FAMILIA, fill = GÉNERO)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+```{r}
+Resultados %>%
+  mutate(CONSUME = factor(CONSUME))%>%
+  ggplot(aes(x = CONSUMIDORES_FAMILIA, fill = CONSUME)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+## Variable Personas Vistas Fumando
+
+### Gráfico de densidad
+
+```{r}
+Resultados %>%
+mutate(GÉNERO = factor(GÉNERO)) %>%
+ggplot(aes(x = PERSONAS_VISTAS)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~GÉNERO,
+scales = "free")
+```
+
+```{r}
+Resultados %>%
+mutate(CONSUME = factor(CONSUME)) %>%
+ggplot(aes(x = PERSONAS_VISTAS)) + 
+geom_density(color = "red", # Color de la curva
+                    fill = "red",  # Color del área sombreada
+                    alpha = 0.5)  +  # Transparencia del color  
+geom_density(alpha=0.5, na.rm = T) + facet_wrap(~CONSUME,
+scales = "free")
+```
+
+### Boxplot
+
+```{r}
+Resultados %>%
+  mutate(GÉNERO = factor(GÉNERO, labels = c("Femenino", "Masculino")))%>%
+  ggplot(aes(x = PERSONAS_VISTAS, fill = GÉNERO)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+```{r}
+Resultados %>%
+  mutate(CONSUME = factor(CONSUME))%>%
+  ggplot(aes(x = PERSONAS_VISTAS, fill = CONSUME)) + geom_boxplot(outlier.color = "red", color = "black")
+```
+
+## Rectas de Regresión
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = EDAD, y = CONSUMIDORES_FAMILIA, color = GÉNERO)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~GÉNERO,scales = "free")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = EDAD, y = CONSUMIDORES_FAMILIA, color = CONSUME)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~CONSUME,scales = "free")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = EDAD, y = PERSONAS_VISTAS, color = GÉNERO)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~GÉNERO,scales = "free")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = EDAD, y = PERSONAS_VISTAS, color = CONSUME)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~CONSUME,scales = "free")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = CONSUMIDORES_FAMILIA, y = PERSONAS_VISTAS, color = GÉNERO)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~GÉNERO,scales = "free")
+```
+
+```{r message=FALSE, warning=FALSE}
+Resultados %>%
+  ggplot(aes(x = CONSUMIDORES_FAMILIA, y = PERSONAS_VISTAS, color = CONSUME)) + geom_point() + geom_smooth(method = "lm", se = T, na.rm = T) +   facet_wrap(~CONSUME,scales = "free")
+```
+
+## Tablas y Gráficas de Contingencias
+
+```{r}
+Resultados %>%
+  tabyl(GÉNERO, CONSUME, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias Género vs Consumidor")
+
+Resultados %>%
+  tabyl(GÉNERO, CONSUME, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  pivot_longer(cols = -1, names_to = "CONSUME", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = CONSUME, y = porcentaje, fill = GÉNERO)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3.2) +
+  labs(fill = "Gráfico Género vs Consumidor")
+```
+
+```{r}
+Resultados %>%
+  tabyl(PROGRAMA, CONSUME, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias Programa vs Consumidor")
+
+Resultados %>%
+  tabyl(PROGRAMA, CONSUME, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  pivot_longer(cols = -1, names_to = "CONSUME", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  filter(porcentaje != 0) %>%
+  ggplot(aes(x = CONSUME, y = porcentaje, fill = PROGRAMA)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9), 
+            vjust = -0.5, col = "black", fontface = "bold", size = 1.5) +
+  labs(fill = "Gráfico Programa vs Consumidor")
+```
+
+```{r}
+Resultados %>%
+  tabyl(OPINION, CONSUME, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias Opinión sobre consumidores vs Consumidor")
+
+Resultados %>%
+  tabyl(OPINION, CONSUME, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  mutate(OPINION = factor(OPINION, labels = c("Incomodidad", "No hay opinion", "Positiva", "Negativa \nrespecto a su salud"))) %>%
+  pivot_longer(cols = -1, names_to = "CONSUME", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = CONSUME, y = porcentaje, fill = OPINION)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 2.5) +
+  labs(fill = "Gráfico Opinión \nSobre Consumidores \nvs Consumidor")
+```
+
+```{r}
+Resultados %>%
+  tabyl(OPINION_CONSUMIDORES, CONSUME, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias de Opinión sobre consumidores en lugares públicos vs Consumidor")
+
+Resultados %>%
+  tabyl(OPINION_CONSUMIDORES, CONSUME, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  mutate(OPINION_CONSUMIDORES = factor(OPINION_CONSUMIDORES, labels = c("De acuerdo", "De acuerdo \n con condición", "En desacuerdo"))) %>%
+  pivot_longer(cols = -1, names_to = "CONSUME", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = CONSUME, y = porcentaje, fill = OPINION_CONSUMIDORES)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3) +
+  labs(fill = "Gráfico Opinión \nSobre Consumidores en lugares Públicos \nvs Consumidor")
+```
+
+```{r}
+Resultados %>%
+  tabyl(BENEFICIO_VAPER, CONSUME, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias sobre el Beneficio del vaper vs Consumidor")
+
+Resultados %>%
+  tabyl(BENEFICIO_VAPER, CONSUME, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  mutate(BENEFICIO_VAPER = factor(BENEFICIO_VAPER, labels = c("Si", "No"))) %>%
+  pivot_longer(cols = -1, names_to = "CONSUME", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = CONSUME, y = porcentaje, fill = BENEFICIO_VAPER)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3) +
+  labs(fill = "Gráfico sobre beneficio del vaper vs Consumidores")
+```
+
+```{r message=FALSE, warning=FALSE}
+chisq.test(Resultados$CONSUME, Resultados$GÉNERO, correct=FALSE) 
+chisq.test(Resultados$CONSUME, Resultados$PROGRAMA, correct=FALSE)
+chisq.test(Resultados$CONSUME, Resultados$OPINION, correct=FALSE)
+chisq.test(Resultados$CONSUME, Resultados$OPINION_CONSUMIDORES, correct=FALSE)
+chisq.test(Resultados$CONSUME, Resultados$EFECTO_VAPEADORES, correct=FALSE)
+```
+
+```{r}
+Resultados %>%
+  tabyl(GÉNERO, EDAD_FUMAR, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias de Género vs edad a la que empezo a fumar")
+
+Resultados %>%
+  tabyl(GÉNERO, EDAD_FUMAR, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  pivot_longer(cols = -1, names_to = "EDAD_FUMAR", values_to = "proporcion") %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = EDAD_FUMAR, y = porcentaje, fill = GÉNERO)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3) +
+  labs(fill = "Gráfico Opinión de Género vs edad a la que empezo a fumar")
+```
+
+```{r message=FALSE, warning=FALSE}
+chisq.test(Resultados$GÉNERO, Resultados$EDAD_FUMAR, correct=FALSE) 
+```
+
+```{r}
+Resultados %>%
+  tabyl(OPINION, OPINION_CONSUMIDORES, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias de Opinion sobre consumidores vs Opinion sobre consumidores en lugares públicos")
+
+Resultados %>%
+  tabyl(OPINION, OPINION_CONSUMIDORES, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  pivot_longer(cols = -1, names_to = "OPINION_CONSUMIDORES", values_to = "proporcion") %>%
+  mutate(OPINION_CONSUMIDORES = factor(OPINION_CONSUMIDORES, labels = c("De acuerdo", "De acuerdo \n con condicion", "En desacuerdo"))) %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = OPINION_CONSUMIDORES, y = porcentaje, fill = OPINION)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3) +
+  labs(fill = "Gráfico de Opinion sobre consumidores vs Opinion sobre consumidores en lugares públicos")
+```
+
+```{r}
+Resultados %>%
+  tabyl(OPINION, BENEFICIO_VAPER, show_na = FALSE) %>%
+  adorn_totals("col") %>%
+  adorn_percentages("col") %>%
+  adorn_pct_formatting() %>%
+  adorn_ns() %>%
+  flextable() %>%
+  autofit() %>%
+  theme_vader()%>%
+  set_caption("Tabla de contingencias de Opinion sobre consumidores vs Opinion sobre Beneficio del vaper")
+
+Resultados %>%
+  tabyl(OPINION, BENEFICIO_VAPER, show_na = FALSE) %>%
+  adorn_percentages("col") %>%
+  pivot_longer(cols = -1, names_to = "BENEFICIO_VAPER", values_to = "proporcion") %>%
+  mutate(BENEFICIO_VAPER = factor(BENEFICIO_VAPER, labels = c("Si", "No"))) %>%
+  mutate(porcentaje = 100*proporcion) %>%
+  ggplot(aes(x = BENEFICIO_VAPER, y = porcentaje, fill = OPINION)) +
+  geom_col(position = "dodge", , color = "black", size = 0.5) +
+  theme(axis.text.x = element_text(angle = 0)) + guides(fill = FALSE) +
+  geom_text(aes(label = sprintf("%.2f%%", porcentaje)),
+            position = position_dodge(width = 0.9),
+            vjust = -0.5, col = "black", fontface = "bold", size = 3) +
+  labs(fill = "Gráfico de Opinion sobre consumidores vs Opinion sobre Beneficio del vaper")
+```
+
+## Análisis de Datos con Escala Likert
+
+```{r}
+Resultados$CALIFICACIÓN <- as.character(Resultados$CALIFICACIÓN)
+```
+
+```{r}
+Resultados$CALIFICACIÓN <- factor(
+  Resultados$CALIFICACIÓN,
+  levels = c(1, 2, 3, 4, 5),
+  labels = c("muy insatisfecho", "insatisfecho", "neutral", "satisfecho", "muy satisfecho")
+)
+w <- cbind.data.frame(Género = Resultados$GÉNERO, Calificación = Resultados$CALIFICACIÓN)
+head(w)
+```
+
+```{r}
+table(Resultados$CALIFICACIÓN)
+```
+
+```{r}
+xlik = likert(w[,2, drop=FALSE])
+summary(xlik)
+```
+
+```{r}
+plot(xlik,type = "bar", centered = F, group.order = colnames(w[,2, drop= FALSE]), legend.position = "right")
+```
+
+```{r}
+plot(xlik,type = "density", centered = F)
+```
+
+```{r}
+plot(xlik,type = "heat", legend.position = "left") +
+  theme( axis.text.x = element_text( size = 8 ),
+         axis.text.y = element_text( size = 18, hjust = 0 ),
+         legend.text = element_text( size = 14 ),
+         legend.title = element_text( size = 10 ) )
+```
+
+```{r}
+xlikgroup = likert(w[,2, drop = FALSE], grouping = w$Género)
+plot(xlikgroup, type = "bar", centered = T)
+```
